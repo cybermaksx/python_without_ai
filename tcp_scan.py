@@ -18,31 +18,3 @@ def tcp_scan(target_ip,target_port):
 
 
 tcp_scan(target_ip,target_port)    
-    
-    
-        
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
