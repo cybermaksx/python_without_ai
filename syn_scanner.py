@@ -3,6 +3,7 @@ import struct
 
 ip = input("What is your target IP : \n")
 port = int(input("Which port do you want to check: \n"))
+my_ip = input("What is your ip adress? \n")
 
 def calculate_checksum(data):
     if len(data) % 2 != 0:
@@ -29,7 +30,7 @@ def syn_scan(ip, port):
     tcp_header = struct.pack("!HHLLHHHH", source_port, port, seq, ack, offset_flags, window, checksum, urgent)
 
     # TCP checksum requires pseudo-header: src_ip + dst_ip + zero + protocol + tcp_length
-    src_ip_bytes = socket.inet_aton("192.168.0.108")
+    src_ip_bytes = socket.inet_aton(my_ip)
     dst_ip_bytes = socket.inet_aton(ip)
     pseudo_header = struct.pack("!4s4sBBH", src_ip_bytes, dst_ip_bytes, 0, 6, 20)
     tcp_checksum = calculate_checksum(pseudo_header + tcp_header)
@@ -44,7 +45,7 @@ def syn_scan(ip, port):
     ttl = 64
     protocol = 6
     checksum = 0
-    source_ip = socket.inet_aton("192.168.0.108")
+    source_ip = socket.inet_aton(my_ip)
     dest_ip = socket.inet_aton(ip)
 
     ip_header = struct.pack("!BBHHHBBH4s4s", ihl_version, tos, total_length, identification, frag_offset, ttl, protocol, checksum, source_ip, dest_ip)
