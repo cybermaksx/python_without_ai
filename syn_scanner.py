@@ -10,7 +10,7 @@ def syn_scan(ip, port):
     # TCP header fields
     seq = 0             # sequence number
     ack = 0             # acknowledgement number
-    offset_flags = 0    # data offset + flags (SYN bit here)
+    offset_flags = (5 << 12) | 0x002    # data offset + flags (SYN bit here)
     window = 0          # window size
     checksum = 0        # checksum
     urgent = 0          # urgent pointer
@@ -36,12 +36,21 @@ def syn_scan(ip, port):
 
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_TCP)
+        s.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
+        s.settimeout(3)
         s.sendto(packet, (ip, 0))
-        s.recvfrom(1024)
-        
+        response = s.recvfrom(1024)
+        tcp = response [0][20:40]
+        tcp_fields = struct.unpack("!HHLLHHHH", tcp)
+        if tcp_fields[5] == 18:
+            print("[*] Port is open")
+        elif tcp_fields[5] == 4:
+            print("[*] Port is closed ")
 
-        
-        
+    except Exception as e:
+        print(f"Error: {e}")
+
+    
 
 syn_scan(ip, port)
 
