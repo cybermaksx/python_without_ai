@@ -4,35 +4,51 @@ import struct
 ip = input("What is your target IP : \n")
 port = int(input("Which port do you want to check: \n"))
 
+def calculate_checksum(data):
+    if len(data) % 2 != 0:
+        data += b'\x00'
+    s = 0
+    for i in range(0, len(data), 2):
+        word = (data[i] << 8) + data[i + 1]
+        s += word
+    s = (s >> 16) + (s & 0xFFFF)
+    s += (s >> 16)
+    return ~s & 0xFFFF
+
 def syn_scan(ip, port):
     source_port = 1234  # our source port
-    
-    # TCP header fields
-    seq = 0             # sequence number
-    ack = 0             # acknowledgement number
-    offset_flags = (5 << 12) | 0x002    # data offset + flags (SYN bit here)
-    window = 0          # window size
-    checksum = 0        # checksum
-    urgent = 0          # urgent pointer
-    
-    tcp_header = struct.pack("!HHLLHHHH", source_port, port, seq, ack, offset_flags, window, checksum, urgent)
-    
-    # IP header fields
-    ihl_version = 69      # version 4, header length 20 bytes
-    tos = 0               # type of service
-    total_length = 40     # 20 IP + 20 TCP
-    identification = 1    # random number
-    frag_offset = 0       # no fragmentation
-    ttl = 64              # time to live
-    protocol = 6          # TCP
-    checksum = 0          # OS will calculate
-    source_ip = socket.inet_aton("192.168.100.111") # your IP
-    dest_ip = socket.inet_aton(ip)               # target IP
 
-    ip_header = struct.pack("!BBHHHBBH4s4s", ihl_version,tos,total_length,identification,frag_offset,ttl,protocol,checksum,source_ip,dest_ip)
-    # combine headers
+    # TCP header fields
+    seq = 0
+    ack = 0
+    offset_flags = (5 << 12) | 0x002
+    window = 0
+    checksum = 0
+    urgent = 0
+
+    tcp_header = struct.pack("!HHLLHHHH", source_port, port, seq, ack, offset_flags, window, checksum, urgent)
+
+    # TCP checksum requires pseudo-header: src_ip + dst_ip + zero + protocol + tcp_length
+    src_ip_bytes = socket.inet_aton("192.168.0.108")
+    dst_ip_bytes = socket.inet_aton(ip)
+    pseudo_header = struct.pack("!4s4sBBH", src_ip_bytes, dst_ip_bytes, 0, 6, 20)
+    tcp_checksum = calculate_checksum(pseudo_header + tcp_header)
+    tcp_header = struct.pack("!HHLLHHHH", source_port, port, seq, ack, offset_flags, window, tcp_checksum, urgent)
+
+    # IP header fields
+    ihl_version = 69
+    tos = 0
+    total_length = 40
+    identification = 1
+    frag_offset = 0
+    ttl = 64
+    protocol = 6
+    checksum = 0
+    source_ip = socket.inet_aton("192.168.0.108")
+    dest_ip = socket.inet_aton(ip)
+
+    ip_header = struct.pack("!BBHHHBBH4s4s", ihl_version, tos, total_length, identification, frag_offset, ttl, protocol, checksum, source_ip, dest_ip)
     packet = ip_header + tcp_header
-    # send packet
 
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_TCP)
@@ -40,17 +56,18 @@ def syn_scan(ip, port):
         s.settimeout(3)
         s.sendto(packet, (ip, 0))
         response = s.recvfrom(1024)
-        tcp = response [0][20:40]
+        tcp = response[0][20:40]
         tcp_fields = struct.unpack("!HHLLHHHH", tcp)
-        if tcp_fields[5] == 18:
+        flags = tcp_fields[4] & 0x1FF
+        if flags == 0x012:
             print("[*] Port is open")
-        elif tcp_fields[5] == 4:
-            print("[*] Port is closed ")
+        elif flags & 0x004:
+            print("[*] Port is closed")
+        print(f"Flags: {hex(flags)}")
 
     except Exception as e:
         print(f"Error: {e}")
 
-    
 
 syn_scan(ip, port)
 
