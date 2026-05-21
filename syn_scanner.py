@@ -1,9 +1,13 @@
 import socket
 import struct
+import os
 
 ip = input("What is your target IP : \n")
 port = int(input("Which port do you want to check: \n"))
-my_ip = input("What is your ip adress? \n")
+my_ip_raw = os.popen("ip -4 addr show wlan0 | awk '/inet/ {print $2}' | cut -d/ -f1").read().strip()
+my_ip = my_ip_raw
+
+
 
 def calculate_checksum(data):
     if len(data) % 2 != 0:
