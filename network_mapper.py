@@ -87,7 +87,7 @@ def syn_scan(target_ip,target_port):
     dest_ip = socket.inet_aton(target_ip)
     ip_header = struct.pack("!BBHHHBBH4s4s", ihl_version, tos, total_length, identification, frag_offset, ttl, protocol, checksum, source_ip, dest_ip)
 
-    packet = tcp_header + ip_header 
+    packet = ip_header + tcp_header 
     
 
     
