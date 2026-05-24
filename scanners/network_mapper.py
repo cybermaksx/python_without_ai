@@ -12,18 +12,19 @@ print("""
     ██║ ╚████║███████╗   ██║       ██║ ╚═╝ ██║██║  ██║██║     ██║     ███████╗██║  ██║
     ╚═╝  ╚═══╝╚══════╝   ╚═╝       ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝     ╚══════╝╚═╝  ╚═╝
 \033[0m
-\033[90m    [ TCP / SYN Scanner ] [ Made by cybermaksx ] [ v1.0 ]\033[0m
+\033[90m    [ TCP / SYN Scanner ] [ Made by cybermaksx and EndU2 (He doesn't exist it is my Tyler Durden) ] [ v1.4 ]\033[0m
 """)
 
 
 
 target_ip = input("What is your target's ip adress ? \n")
 
-my_ip_raw = os.popen("ip -4 addr show wlan0 | awk '/inet/ {print $2}' | cut -d/ -f1").read().strip() #Could have been done easier but i like it this way
+s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+s.connect(("8.8.8.8", 80))
+my_ip = s.getsockname()[0]
+s.close()
 
-my_ip = my_ip_raw
-
-port_range = int(input("\n What type of port scanning you would like to do ?  \n 1) Standart Ports for enumerating Standart services \n 2) I want to check all ports on my target \n  "))
+port_range = int(input("\n What type of port scanning you would like to do ?  \n 1) Standart Ports for enumerating Standart services \n 2) I want to check all ports on my target \n 3) Manual range \n 4) Fully manual \n"))
 
 
 type_of_scan = int(input("\n What type of scan you want to do : \n 1) TCP SCAN\n  2) SYN Scan  \n Please choose :   "))
@@ -32,7 +33,20 @@ if port_range == 1:
     ports = [21, 22, 80, 443] #I will add all default ports here 
 elif port_range == 2:
     ports = range(1, 65536)
-
+elif port_range == 3:
+    range_start = int(input("Start from: "))
+    range_end = int(input("Scan to: "))
+    ports = range(range_start, range_end)
+elif port_range == 4:
+    print("Enter all ports one by one then type enter")
+    ports = []
+    while (True):
+        n = input("Port or stop: ")
+        if n.lower() == "stop":
+            break
+        else:
+            ports.append(int(n))
+        
 def tcp_scan (target_ip,target_port ):
     try: 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -117,8 +131,6 @@ def syn_scan(target_ip,target_port):
         flags = tcp_fields[4] & 0x1FF # Now we only saving last 9 bytes which is very the flags that we need 
         if flags == 0x012: # This is RST's bytes
                     print(f"[*] {target_port} Port is open")
-        elif flags & 0x004:
-            print(f"[*] {target_port} Port is closed")
 
     except Exception as e:
         print(f"Error: {e}")
@@ -130,10 +142,3 @@ for port in ports:
         tcp_scan(target_ip, port)
     elif type_of_scan == 2:
         syn_scan(target_ip, port)
-
-
-
-
-
-
-
