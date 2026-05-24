@@ -32,10 +32,6 @@ def tcp_scan (target_ip,target_port ):
         print (f" {target_port} seems to be closed | filtered")
 
 
-for port in ports:
-    tcp_scan(target_ip, port)
-
-
 def calculate_checksum(data):
     # If the number of bytes is odd, add a zero byte at the end to make it even
     if len(data) % 2 != 0:
@@ -65,25 +61,30 @@ def syn_scan(target_ip,target_port):
     #TCP headers fileds
     seq = 0 #In the beggining seq should be 0 
     ack = 0 #If seq = 0 ,ack = 0 as well
+    urgent = 0
     offset_flags = (5 << 12) | 0x002 # size of our packet + SYN flag
     window = 0  # We are just scanning we don't need to accept anything
     checksum = 0 # we will use def for this later
     source_ip = socket.inet_aton(my_ip) #intet_aton converts our strings and ints to bytes
-    dest_ip = socket.inet_aton(ip)  
+    dest_ip = socket.inet_aton(target_ip)  
 
-    tcp_header = struct.pack("!HHLLHHHH", source_port, port, seq, ack, offset_flags, window, checksum, urgent)#converting to the big indian so the server can understand
+    tcp_header = struct.pack("!HHLLHHHH", source_port, target_port, seq, ack, offset_flags, window, checksum, urgent)#converting to the big indian so the server can understand
+    pseudo_header = struct.pack("!4s4sBBH", source_ip, dest_ip, 0, 6, len(tcp_header))
+    checksum = calculate_checksum(pseudo_header + tcp_header)
+    tcp_header = struct.pack("!HHLLHHHH", source_port, target_port, seq, ack, offset_flags, window, checksum, urgent)
+    
 
     #Ip header fields
     ihl_version = 69  #Internet Header Length which is standart for each ip packet 4 because ipv 4 and 5 because we are using 5 blocks each 4 bytes which gives as 20 and 0100 0101  =  69 
     tos = 0 #Type Of service or priority  
     total_length = 40  # 20 bytes ip + 20 bytes tcp
     identification = 0 #ID of packet we need if it gets damaged however it will not because it's too small 
-    frag_ofset = 0  # we will need this value only if our packet cuttet into pieces
+    frag_offset = 0  # we will need this value only if our packet cuttet into pieces
     ttl = 64 # how many routers we can get trough
     protocol = 6 # tcp = 6 
     checksum = 0 
     source_ip = socket.inet_aton(my_ip)
-    dest_ip = socket.inet_aton(ip)
+    dest_ip = socket.inet_aton(target_ip)
     ip_header = struct.pack("!BBHHHBBH4s4s", ihl_version, tos, total_length, identification, frag_offset, ttl, protocol, checksum, source_ip, dest_ip)
 
     packet = tcp_header + ip_header 
@@ -94,14 +95,27 @@ def syn_scan(target_ip,target_port):
         s = socket.socket(socket.AF_INET, socket.SOCK_RAW , socket.IPPROTO_TCP) # SOCKRAW is important here because we don't want out system to touch this socket
         s.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1) # Socket options : DON"T touch socket which we made
         s.settimeout(3) # Don't wait if answer didn't come in 3 seconds
-        s.sendto(packet, (ip, 0))
+        s.sendto(packet, (target_ip, 0))
         response = s.recvfrom(1024) #Max response length in bytes
         tcp = response[0][20:40] # We are getting TCP header from response
         tcp_fields = struct.unpack("!HHLLHHHH", tcp) # Taking raw bytes back to the human readeble format 
+        flags = tcp_fields[4] & 0x1FF # Now we only saving last 9 bytes which is very the flags that we need 
+        if flags == 0x012: # This is RST's bytes
+                    print(f"[*] {target_port} Port is open")
+        elif flags & 0x004:
+            print(f"[*] {target_port} Port is closed")
+
+    except Exception as e:
+        print(f"Error: {e}")
         
+             
     
-    
-    
+for port in ports:
+    if type_of_scan == 1:
+        tcp_scan(target_ip, port)
+    elif type_of_scan == 2:
+        syn_scan(target_ip, port)
+
 
 
 
