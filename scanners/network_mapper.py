@@ -36,16 +36,16 @@ elif port_range == 2:
 elif port_range == 3:
     range_start = int(input("Start from: "))
     range_end = int(input("Scan to: "))
-    ports = range(range_start, range_end)
+    ports = range(range_start, range_end) #Great way to choose from one way to another 
 elif port_range == 4:
     print("Enter all ports one by one then type enter")
-    ports = []
+    ports = [] #Empty list
     while (True):
         n = input("Port or stop: ")
         if n.lower() == "stop":
             break
         else:
-            ports.append(int(n))
+            ports.append(int(n)) #Efficent way to adding ports into empty list
         
 def tcp_scan (target_ip,target_port ):
     try: 
