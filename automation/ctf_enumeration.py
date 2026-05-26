@@ -11,7 +11,7 @@ def web_enumeration(target_url):
     output_file = "dirsearch_results.json"
     try:
         print(f"Running dirsearch against {target_url}")
-        subprocess.run(f"dirsearch -u {target_url} --format=json -o {output_file}",shell=True check=True) #check = True that python will interpret mistake as exception if one occurs
+        subprocess.run(f"dirsearch -u {target_url} --output-formats=json  -o {output_file}",shell=True , check=True) #check = True that python will interpret mistake as exception if one occurs
         with open(output_file, "r") as f:
                     data = json.load(f)
 
@@ -36,8 +36,6 @@ def web_enumeration(target_url):
 
 
 
-
-
 def fast_scan(target_ip):
     try:
         print(f"[*] Running nmap scan against {target_ip}")
@@ -59,6 +57,13 @@ def fast_scan(target_ip):
     except Exception as e:
         print(f"Error: {e}")
                              
+    if "80" in ports:
+        target_url = f"http://{target_ip}"
+        web_enumeration(target_url)
+    else:
+        print("No web services")        
+
+
 
 
 def deep_scan(target_ip):
@@ -71,30 +76,11 @@ def deep_scan(target_ip):
 
 
 if level_of_enumeration == 1:
-    fast_enumeration(target_ip)
+    fast_scan(target_ip)
 elif level_of_enumeration == 2:
-    deep_enumeration(target_ip)
+    deep_scan(target_ip)
 
 else:
     print(" Please choose the right method !!! ")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
