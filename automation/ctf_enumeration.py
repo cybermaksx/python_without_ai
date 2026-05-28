@@ -69,31 +69,30 @@ def fast_scan(target_ip):
 def deep_scan(target_ip):
     try:
         print(f"[*] Running nmap scan against {target_ip}")
-        subprocess.run(f"sudo nmap -sS -sC -sV {target_ip} -p-  -T3 -oN nmap.txt" , shell=True)
-
+        subprocess.run(f"sudo nmap -sS -sV -sC -p-  {target_ip} -oN nmap.txt", shell=True)
+            
         ports = []
         with open("nmap.txt") as f:
             for line in f:
                 if "open" in line:
-                    port = line.split("/")
-                    ports.append(port)
-        ports = ",".join(port)
-        print("[+] Open ports :" , ports)
-
-        if not ports:
-           print("No open ports has been found "
-
-
-        except Exception as e:
-            print(f"Error {e}"
-
-
-        if "80" in ports:
-            target_url = f"http://{target}"
-            web_enumeration(target_url)
-        else:
-            print("No web services")
-
+                        port = line.split("/")[0]
+                        ports.append(port)
+            
+            ports = ",".join(ports)
+            print("[+] Open ports:", ports)
+            
+            if not ports:
+                print("No open ports has been found")
+        
+    except Exception as e:
+            print(f"Error: {e}")
+                                 
+            if "80" in ports:
+                target_url = f"http://{target_ip}"
+                web_enumeration(target_url)
+            else:
+                print("No web services")
+    
 
 
 if level_of_enumeration == 1:
